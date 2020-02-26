@@ -214,3 +214,44 @@ end$$
  SET @name_list ="";  
     CALL list_name(@name_list);  
     SELECT @name_list;  
+
+#Working with triggers
+#start creating a trigger in MySQL to log the changes of the employees table.
+# create a new table named employees_audit to keep the changes to the employees table:
+CREATE TABLE employees_audit (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employeeNumber INT NOT NULL,
+    lastname VARCHAR(50) NOT NULL,
+    changedat DATETIME DEFAULT NULL,
+    action VARCHAR(50) DEFAULT NULL
+);
+
+create a BEFORE UPDATE trigger that is invoked before a change is made to the employees table.
+CREATE TRIGGER before_employee_update 
+    BEFORE UPDATE ON employees
+    FOR EACH ROW 
+ INSERT INTO employees_audit
+ SET action = 'update',
+     employeeNumber = OLD.employeeNumber,
+     lastname = OLD.lastname,
+     changedat = NOW();
+
+Here we used the OLD keyword to access values of the columns employeeNumber and lastname of the row affected by the trigger.
+
+#show all triggers in the current database by using the SHOW TRIGGERS statement:
+
+#Testing trigger
+update a row in the employees table:
+
+UPDATE employees 
+SET 
+    lastName = 'Phan'
+WHERE
+    employeeNumber = 1056;
+
+#query the employees_audit table to check if the trigger was fired by the UPDATE statement:
+SELECT * FROM employees_audit;
+
+
+
+
