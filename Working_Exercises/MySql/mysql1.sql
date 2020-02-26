@@ -1,0 +1,2 @@
+use ajdb;
+show tables;

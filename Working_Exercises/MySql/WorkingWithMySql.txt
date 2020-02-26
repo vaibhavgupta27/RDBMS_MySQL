@@ -1,0 +1,216 @@
+#mysql1.sql 
+use ajdb;
+show tables;
+
+$mysql ajdb < mysql1.sql 
+
+#Result 
+Tables_in_ajdb
+BankiingData
+coalData
+mytbl
+powerdata
+students
+
+#mysql2.sql
+##creating stored procedure
+delimiter $$
+create procedure GetDetails()
+begin
+	select age,marital,job,y 
+	from 
+	BankiingData 
+	where y="yes";
+end $$
+delimiter ;
+
+#Result
+mysql> use ajdb;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> call GetDetails();
++-----+----------+---------------+------+
+| age | marital  | job           | y    |
++-----+----------+---------------+------+
+|  20 | single   | student       | yes  |
+|  21 | single   | student       | yes  |
+|  23 | single   | student       | yes  |
+|  23 | single   | student       | yes  |
+|  24 | single   | services      | yes  |
+|  24 | married  | blue-collar   | yes  |
+|  24 | married  | services      | yes  |
+....
+
+mysql> drop procedure GetDetails;
+Query OK, 0 rows affected (0.01 sec)
+
+#create procedure again
+mysql> show procedure status where db = "ajdb";
++------+------------+-----------+----------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
+| Db   | Name       | Type      | Definer        | Modified            | Created             | Security_type | Comment | character_set_client | collation_connection | Database Collation |
++------+------------+-----------+----------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
+| ajdb | GetDetails | PROCEDURE | root@localhost | 2020-02-25 23:17:30 | 2020-02-25 23:17:30 | DEFINER       |         | utf8                 | utf8_general_ci      | latin1_swedish_ci  |
++------+------------+-----------+----------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
+1 row in set (0.00 sec)
+
+mysql> show procedure status like '%Get%';
+
+Listing stored procedures using Data Dictionary
+The routines table in information_schema database contains all information on the store procedure and stored functions of all databases in MySQL Server
+#mysql4.sql
+#Listing procedures
+select routine_name
+from information_schema.routines
+where routine_type = "procedure"
+  and routine_schema = "ajdb";
+
+#result
+routine_name
+GetDetails
+
+
+#Working with Cursors
+First, declare a cursor by using the DECLARE statement:
+
+$DECLARE cursor_name CURSOR FOR SELECT_statement;
+
+The cursor declaration must be after any variable declaration. If you declare a cursor before the variable declarations, MySQL will issue an error. 
+A cursor must always associate with a SELECT statement.
+
+open the cursor by using the OPEN statement. The OPEN statement initializes the result set for the cursor, therefore, 
+you must call the OPEN statement before fetching rows from the result set.
+
+$OPEN cursor_name;
+
+use the FETCH statement to retrieve the next row pointed by the cursor and move the cursor to the next row in the result set.
+
+$FETCH cursor_name INTO variables list;
+
+After that, check if there is any row available before fetching it.
+
+Finally, deactivate the cursor and release the memory associated with it  using the CLOSE statement:
+
+$CLOSE cursor_name;
+
+It is a good practice to always close a cursor when it is no longer used.
+
+When working with MySQL cursor, you must also declare a NOT FOUND handler to handle the situation when the cursor could not find any row.
+Because each time you call the FETCH statement, the cursor attempts to read the next row in the result set. When the cursor reaches the end of the result set, 
+it will not be able to get the data, and a condition is raised. The handler is used to handle this condition.
+
+To declare a NOT FOUND handler:
+
+$DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
+
+The finished is a variable to indicate that the cursor has reached the end of the result set. Notice that the handler declaration 
+must appear after variable and cursor declaration inside the stored procedures.
+
+#Example:
+
+Download MySQL Sample database
+unzip and load the sample database into mysql
+$mysql
+$source /tmp/mysqlsampledatabase.sql
+$show databases (look for classicmodels
+
+#develop a stored procedure that creates an email list of all employees in the employees table in the "classicmodels" database
+# declare some variables, a cursor for looping over the emails of employees, and a NOT FOUND handler:
+
+    DECLARE finished INTEGER DEFAULT 0;
+    DECLARE emailAddress varchar(100) DEFAULT "";
+ 
+    -- declare cursor for employee email
+    DEClARE curEmail 
+        CURSOR FOR 
+            SELECT email FROM employees;
+ 
+    -- declare NOT FOUND handler
+    DECLARE CONTINUE HANDLER 
+        FOR NOT FOUND SET finished = 1;
+
+#open the cursor by using the OPEN statement:
+OPEN curEmail;
+
+#Then, iterate the email list, and concatenate all emails where each email is separated by a semicolon(;):
+#    FETCH [ NEXT [ FROM ] ] cursor_name INTO variable_list;  
+
+       getEmail: LOOP
+        FETCH curEmail INTO emailAddress;
+        IF finished = 1 THEN 
+            LEAVE getEmail;
+        END IF;
+        -- build email list
+        SET emailList = CONCAT(emailAddress,";",emailList);
+    END LOOP getEmail;
+
+Finally, close the cursor using the CLOSE statement:
+CLOSE email_cursor;
+
+#createEmailList stored procedure
+DELIMITER $$
+CREATE PROCEDURE createEmailList (
+    INOUT emailList varchar(4000)
+)
+BEGIN
+    DECLARE finished INTEGER DEFAULT 0;
+    DECLARE emailAddress varchar(100) DEFAULT "";
+ 
+    -- declare cursor for employee email
+    DEClARE curEmail 
+        CURSOR FOR 
+            SELECT email FROM employees;
+ 
+    -- declare NOT FOUND handler
+    DECLARE CONTINUE HANDLER 
+        FOR NOT FOUND SET finished = 1;
+ 
+    OPEN curEmail;
+ 
+    getEmail: LOOP
+        FETCH curEmail INTO emailAddress;
+        IF finished = 1 THEN 
+            LEAVE getEmail;
+        END IF;
+        -- build email list
+        SET emailList = CONCAT(emailAddress,";",emailList);
+    END LOOP getEmail;
+    CLOSE curEmail;
+ 
+END$$
+DELIMITER ;
+
+#Test stored procedure
+SET @emailList = ""; 
+CALL createEmailList(@emailList); 
+SELECT @emailList;
+
+#Example 
+#create stored procedure and cursor
+#Stored Procedure
+use classicmodels;
+delimiter $$
+create procedure list_name(inout name_list varchar(4000))
+begin
+        declare is_done integer default 0;
+        declare e_name varchar(100) default "";
+        declare emp_cursor cursor for
+        select firstName from employees;
+        declare continue handler for not found set is_done = 1;
+        open emp_cursor;
+        get_list: Loop
+        fetch emp_cursor into e_name;
+        if is_done = 1 then
+                leave get_list;
+        end if;
+        set name_list = concat(e_name,";",name_list);
+end Loop get_list;
+close emp_cursor;
+end$$
+
+#Test it..  
+
+ SET @name_list ="";  
+    CALL list_name(@name_list);  
+    SELECT @name_list;  
