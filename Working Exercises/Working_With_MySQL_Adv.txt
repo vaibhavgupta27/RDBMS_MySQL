@@ -1,0 +1,104 @@
+Stored procedure:
+---------------
+When you use MySQL Workbench or mysql shell to issue the query to MySQL Server, 
+MySQL processes the query and returns the result set.
+
+If you want to save this query on the database server for execution later, 
+one way to do it is to use a stored procedure.
+
+By definition, a stored procedure is a segment of declarative SQL statements stored inside the MySQL Server.
+In this example, we have just created a stored procedure with the name GetDetails().
+
+MySQL stored procedures advantages
+The following are the advantages of stored procedures.
+
+Reduce network traffic
+Stored procedures help reduce the network traffic between applications and MySQL Server. 
+Because instead of sending multiple lengthy SQL statements, applications have to send only the 
+name and parameters of stored procedures.
+
+Centralize business logic in the database
+You can use the stored procedures to implement business logic that is reusable by multiple applications. 
+The stored procedures help reduce the efforts of duplicating the same logic in many applications and 
+make your database more consistent.
+
+Make database more secure
+The database administrator can grant appropriate privileges to applications that only access specific 
+stored procedures without giving any privileges on the underlying tables.
+
+MySQL stored procedures disadvantages
+Besides those advantages, stored procedures also have disadvantages:
+
+Resource usages
+If you use many stored procedures, the memory usage of every connection will increase substantially.
+
+Besides, overusing a large number of logical operations in the stored procedures will increase 
+the CPU usage because the MySQL is not well-designed for logical operations.
+
+Troubleshooting
+It’s difficult to debug stored procedures. Unfortunately, MySQL does not provide any facilities to 
+debug stored procedures like other enterprise database products such as Oracle and SQL Server.
+
+example:
+==================
+MySQL Cursor
+Use MySQL cursor in stored procedures to iterate through a result set returned by a SELECT statement.
+
+Introduction to MySQL cursor
+To handle a result set inside a stored procedure, you use a cursor. 
+A cursor allows you to iterate a set of rows returned by a query and process each row individually.
+
+MySQL cursor is read-only, non-scrollable and asensitive.
+
+Read-only: you cannot update data in the underlying table through the cursor.
+
+Non-scrollable: you can only fetch rows in the order determined by the SELECT statement. 
+You cannot fetch rows in the reversed order. In addition, you cannot skip rows or jump to a specific row in the result set.
+
+Asensitive: There are two kinds of cursors: 
+1.asensitive cursor 
+2.insensitive cursor 
+An asensitive cursor points to the actual data, whereas an insensitive cursor uses a temporary copy of the data.
+An asensitive cursor performs faster than an insensitive cursor because it does not have to make a temporary copy of data.
+However, any change that made to the data from other connections will affect the data that is 
+being used by an asensitive cursor, therefore, it is safer if you do not update the data that 
+is being used by an asensitive cursor. 
+
+MySQL cursor is asensitive.
+
+example:
+=============================
+Triggers:
+In MySQL, a trigger is a stored program invoked automatically in response to an event such as insert, 
+update, or delete that occurs in the associated table. For example, you can define a trigger that is invoked 
+automatically before a new row is inserted into a table.
+
+MySQL supports triggers that are invoked in response to the INSERT, UPDATE or DELETE event.
+
+The SQL standard defines two types of triggers: row-level triggers and statement-level triggers.
+
+A row-level trigger is activated for each row that is inserted, updated, or deleted.  For example, 
+if a table has 100 rows inserted, updated, or deleted, the trigger is automatically invoked 100 times for the 
+100 rows affected.
+A statement-level trigger is executed once for each transaction regardless of how many rows are inserted, updated, 
+or deleted.
+MySQL supports only row-level triggers. It doesn’t support statement-level triggers.
+
+Advantages of triggers
+Triggers provide another way to check the integrity of data.
+Triggers handle errors from the database layer.
+Triggers give an alternative way to run scheduled tasks. By using triggers, you don’t have to wait for the 
+scheduled events to run because the triggers are invoked automatically before or after a change is made to the 
+data in a table.
+Triggers can be useful for auditing the data changes in tables.
+
+Disadvantages of triggers
+Triggers can only provide extended validations, not all validations. For simple validations, 
+you can use the NOT NULL, UNIQUE, CHECK and FOREIGN KEY constraints.
+Triggers can be difficult to troubleshoot because they execute automatically in the database, which may not 
+invisible to the client applications.
+Triggers may increase the overhead of the MySQL Server.
+
+Example:
+====================
+
